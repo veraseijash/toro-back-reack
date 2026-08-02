@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, ManyToOne } from 'typeorm';
+import { Groupht } from 'src/group_ht/group_ht.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne } from 'typeorm';
 @Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn()
@@ -57,4 +58,6 @@ export class User {
   @Column('tinyint', { default: () => 0, nullable: false })
   hide_user: boolean;
 
+  @OneToOne(() => Groupht, (groupht) => groupht.user)
+  groupht: Groupht;
 }

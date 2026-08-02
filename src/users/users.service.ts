@@ -128,7 +128,8 @@ export class UsersService {
     const row = JSON.parse(JSON.stringify(laboratoryFound));
     const license = await this.LicenseService.validateLicenseKey(
       row.rif.replace(/-/g, ''), row.business_name.replace(/\s+/g, ''), row.license
-    )
+    );
+    console.log('license', license);
     if (!license) {
       return new HttpException('INVALID_LICENSE_KEY', HttpStatus.FORBIDDEN);
     }

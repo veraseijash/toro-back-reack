@@ -1,5 +1,13 @@
 import { Grouphtitems } from 'src/group_ht_items/group_ht_items.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { User } from 'src/users/users.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 
 @Entity({ name: 'group_ht' })
 export class Groupht {
@@ -14,6 +22,13 @@ export class Groupht {
 
   @Column('tinyint', { default: () => 0 })
   annulled: boolean;
+
+  @Column('int', { default: () => 0 })
+  userId: number;
+
+  @OneToOne(() => User, (user) => user.groupht)
+  @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
+  user: User;
 
   @OneToMany(() => Grouphtitems, (grouphtitems) => grouphtitems.groupht)
   grouphtitems: Grouphtitems[];

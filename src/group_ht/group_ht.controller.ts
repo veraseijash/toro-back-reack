@@ -31,6 +31,12 @@ export class GroupHtController {
   }
 
   @UseGuards(JwtUserGuard)
+  @Get('/list/totals')
+  getGroupHtListActiveWithTotals() {
+    return this.group_htService.getGroupHtListActiveWithTotals();
+  }
+
+  @UseGuards(JwtUserGuard)
   @Get(':id')
   getGroupHt(@Param('id', ParseIntPipe) id: number) {
     return this.group_htService.getGroupHt(id);

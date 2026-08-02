@@ -20,8 +20,63 @@ export class GroupHtService {
       where: {
         annulled: false,
       },
-      relations: ['grouphtitems'],
+      relations: ['grouphtitems', 'user'],
     });
+  }
+
+  async getGroupHtListActiveWithTotals() {
+    const groups = await this.group_htRepository
+      .createQueryBuilder('groupht')
+      .leftJoin('groupht.user', 'user')
+      .leftJoin('groupht.grouphtitems', 'grouphtitems')
+      .leftJoin(
+        'exams',
+        'exam',
+        'exam.examlistsId = grouphtitems.examId AND DATE(exam.date) = CURDATE()',
+      )
+      .select('groupht.id', 'id')
+      .addSelect('groupht.description', 'description')
+      .addSelect('groupht.details', 'details')
+      .addSelect('groupht.annulled', 'annulled')
+      .addSelect('groupht.userId', 'userId')
+      .addSelect('user.name', 'user_name')
+      .addSelect('user.url_photo', 'user_url_photo')
+      .addSelect('COALESCE(COUNT(exam.id), 0)', 'total')
+      .addSelect(
+        'COALESCE(SUM(CASE WHEN exam.processed_id <> 0 THEN 1 ELSE 0 END), 0)',
+        'total_processed',
+      )
+      .addSelect(
+        'COALESCE(SUM(CASE WHEN exam.approved_id <> 0 THEN 1 ELSE 0 END), 0)',
+        'total_approved',
+      )
+      .where('groupht.annulled = :annulled', { annulled: false })
+      .groupBy('groupht.id')
+      .addGroupBy('groupht.description')
+      .addGroupBy('groupht.details')
+      .addGroupBy('groupht.annulled')
+      .addGroupBy('groupht.userId')
+      .addGroupBy('user.id')
+      .addGroupBy('user.name')
+      .addGroupBy('user.url_photo')
+      .getRawMany();
+
+    return groups.map((group) => ({
+      id: Number(group.id),
+      description: group.description,
+      details: group.details,
+      annulled: Boolean(group.annulled),
+      userId: Number(group.userId),
+      user: group.user_name
+        ? {
+            name: group.user_name,
+            url_photo: group.user_url_photo,
+          }
+        : null,
+      total: Number(group.total),
+      total_processed: Number(group.total_processed),
+      total_approved: Number(group.total_approved),
+    }));
   }
 
   async countWithLike(description: string) {
@@ -37,7 +92,7 @@ export class GroupHtService {
       where: {
         id,
       },
-      relations: ['grouphtitems'],
+      relations: ['grouphtitems', 'user'],
     });
     if (!groupHtFound) {
       return new HttpException('grupo HT no encontrado', HttpStatus.NOT_FOUND);
