@@ -1,5 +1,12 @@
 import { Groupht } from 'src/group_ht/group_ht.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne } from 'typeorm';
+import { Message } from '../websockets/message.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 @Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn()
@@ -60,4 +67,7 @@ export class User {
 
   @OneToOne(() => Groupht, (groupht) => groupht.user)
   groupht: Groupht;
+
+  @OneToMany(() => Message, (message) => message.recipient)
+  receivedMessages: Message[];
 }

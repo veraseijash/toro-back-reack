@@ -32,6 +32,7 @@ import { RoutinesModule } from './routines/routines.module';
 import { GroupHtItemsModule } from './group_ht_items/group_ht_items.module';
 import { join } from 'path';
 import { NestFactory } from '@nestjs/core';
+import { GatewayModule } from './websockets/websocket.module';
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { NestFactory } from '@nestjs/core';
     GroupHtModule,
     RoutinesModule,
     GroupHtItemsModule,
+    GatewayModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
       exclude: ['/api/(.*)'],
