@@ -28,7 +28,7 @@ export class PatientsService {
       where: {
         id,
       },
-      relations: ['exams'],
+      relations: ['exams', 'user', 'deliveryUser', 'client'],
     });
     if (!patientFound) {
       return new HttpException('paciente no encontrado', HttpStatus.NOT_FOUND);

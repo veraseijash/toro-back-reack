@@ -1,4 +1,5 @@
-import {Entity, Column, PrimaryGeneratedColumn, ManyToOne, NumericType, OneToMany} from 'typeorm';
+import { Patient } from 'src/patients/patients.entity';
+import {Entity, Column, PrimaryGeneratedColumn, OneToMany} from 'typeorm';
 
 @Entity({name: 'client'})
 export class Client {
@@ -37,4 +38,7 @@ export class Client {
 
     @Column('tinyint', {default: () => 0})
     charge_dollars: boolean
+
+    @OneToMany(() => Patient, (patient) => patient.client)
+    patients: Patient[]
 }

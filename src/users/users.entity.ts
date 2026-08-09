@@ -1,4 +1,5 @@
 import { Groupht } from 'src/group_ht/group_ht.entity';
+import { Patient } from 'src/patients/patients.entity';
 import { Message } from '../websockets/message.entity';
 import {
   Entity,
@@ -67,6 +68,12 @@ export class User {
 
   @OneToOne(() => Groupht, (groupht) => groupht.user)
   groupht: Groupht;
+
+  @OneToMany(() => Patient, (patient) => patient.user)
+  patients: Patient[];
+
+  @OneToMany(() => Patient, (patient) => patient.deliveryUser)
+  deliveredPatients: Patient[];
 
   @OneToMany(() => Message, (message) => message.recipient)
   receivedMessages: Message[];

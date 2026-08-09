@@ -1,5 +1,14 @@
 import { Exam } from 'src/exams/exams.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, OneToOne, JoinColumn, ManyToOne } from 'typeorm';
+import { User } from 'src/users/users.entity';
+import { Client } from 'src/client/client.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 
 @Entity({ name: 'patients' })
 export class Patient {
@@ -47,6 +56,12 @@ export class Patient {
 
   @Column('int', { default: () => 0 })
   client_id: number;
+
+  @ManyToOne(() => Client, (client) => client.patients, {
+    createForeignKeyConstraints: false,
+  })
+  @JoinColumn({ name: 'client_id', referencedColumnName: 'id' })
+  client: Client;
 
   @Column('tinyint', { default: () => 0 })
   process: boolean;
@@ -129,6 +144,12 @@ export class Patient {
   @Column('int', { default: () => 0 })
   delivery_id: number;
 
+  @ManyToOne(() => User, (user) => user.deliveredPatients, {
+    createForeignKeyConstraints: false,
+  })
+  @JoinColumn({ name: 'delivery_id', referencedColumnName: 'id' })
+  deliveryUser: User;
+
   @Column('varchar', { length: 100, nullable: true })
   receive: string;
 
@@ -149,6 +170,10 @@ export class Patient {
 
   @Column('int', { default: () => 0 })
   user_id: number;
+
+  @ManyToOne(() => User, (user) => user.patients)
+  @JoinColumn({ name: 'user_id', referencedColumnName: 'id' })
+  user: User;
 
   @Column('int', { default: () => 0 })
   user_id_canceled: number;
