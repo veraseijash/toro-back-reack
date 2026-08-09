@@ -40,6 +40,15 @@ export class UsersController {
   getUsersOrder(): Promise<User[]> {
     return this.usersService.getUsersOrder();
   }
+
+  @UseGuards(JwtUserGuard)
+  @Get('/visible-with-unread-messages/:userId')
+  getVisibleUsersWithUnreadMessageCount(
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    return this.usersService.getVisibleUsersWithUnreadMessageCount(userId);
+  }
+
   @UseGuards(JwtUserGuard)
   @Get(':id')
   getUser(@Param('id', ParseIntPipe) id: number) {

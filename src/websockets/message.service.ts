@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 import { CreateMessageDto } from './dto/create-message.dto';
+import { UpdateMessageDto } from './dto/update-message.dto';
 import { Message } from './message.entity';
 import { User } from '../users/users.entity';
 
@@ -83,6 +88,37 @@ export class MessageService {
     });
   }
 
+  findByUsersAndDays(
+    recipientUserId: number,
+    senderUserId: number,
+    days: number,
+  ): Promise<Message[]> {
+    if (!Number.isFinite(days) || days < 0) {
+      throw new BadRequestException(
+        'El número de días debe ser un valor mayor o igual a cero',
+      );
+    }
+
+    const createdFrom = new Date();
+    createdFrom.setTime(createdFrom.getTime() - days * 24 * 60 * 60 * 1000);
+
+    return this.messageRepository.find({
+      where: [
+        {
+          recipientUserId,
+          senderUserId,
+          createdAt: MoreThanOrEqual(createdFrom),
+        },
+        {
+          recipientUserId: senderUserId,
+          senderUserId: recipientUserId,
+          createdAt: MoreThanOrEqual(createdFrom),
+        },
+      ],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async markAsRead(id: number): Promise<Message> {
     const message = await this.messageRepository.findOne({ where: { id } });
 
@@ -97,5 +133,17 @@ export class MessageService {
     }
 
     return message;
+  }
+
+  async updateMessage(id: number, message: UpdateMessageDto): Promise<Message> {
+    const messageFound = await this.messageRepository.findOne({
+      where: { id },
+    });
+
+    if (!messageFound) {
+      throw new NotFoundException('Mensaje no encontrado');
+    }
+
+    return this.messageRepository.save(Object.assign(messageFound, message));
   }
 }

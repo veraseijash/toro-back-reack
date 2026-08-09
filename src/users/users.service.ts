@@ -8,6 +8,7 @@ import { LoginUserDto } from './dto/login-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { LaboratoryService } from 'src/laboratory/laboratory.service';
 import { LicenseService } from 'src/license/license.service';
+import { Message } from 'src/websockets/message.entity';
 const bcrypt = require('bcrypt');
 
 @Injectable()
@@ -50,6 +51,39 @@ export class UsersService {
       order: {
         name: 'ASC',
       },
+    });
+  }
+
+  async getVisibleUsersWithUnreadMessageCount(userId: number) {
+    const { entities, raw } = await this.usersRepository
+      .createQueryBuilder('user')
+      .leftJoin(
+        Message,
+        'message',
+        `message.senderUserId = user.id
+          AND message.recipientUserId = :userId
+          AND message.isRead = :isRead`,
+        { userId, isRead: false },
+      )
+      .select('user')
+      .addSelect('COUNT(message.id)', 'messageCount')
+      .addSelect('MAX(message.createdAt)', 'lastMessageAt')
+      .where('user.hide_user = :hideUser', { hideUser: false })
+      .andWhere('user.id != :userId', { userId })
+      .groupBy('user.id')
+      .orderBy('user.name', 'ASC')
+      .getRawAndEntities();
+
+    return entities.map((user, index) => {
+      const userWithoutPasswordSignature: Partial<User> = { ...user };
+      delete userWithoutPasswordSignature.passwordSignature;
+      const messageCount = Number(raw[index].messageCount);
+
+      return {
+        ...userWithoutPasswordSignature,
+        messageCount,
+        ...(messageCount > 0 && { lastMessageAt: raw[index].lastMessageAt }),
+      };
     });
   }
 
@@ -127,7 +161,9 @@ export class UsersService {
     const laboratoryFound = await this.laboratoryService.getLaboratory(1);
     const row = JSON.parse(JSON.stringify(laboratoryFound));
     const license = await this.LicenseService.validateLicenseKey(
-      row.rif.replace(/-/g, ''), row.business_name.replace(/\s+/g, ''), row.license
+      row.rif.replace(/-/g, ''),
+      row.business_name.replace(/\s+/g, ''),
+      row.license,
     );
     console.log('license', license);
     if (!license) {
