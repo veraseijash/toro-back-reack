@@ -100,7 +100,10 @@ export class Laboratory {
 
   @Column('int', { default: 0 })
   receipt_number: number;
-  
+
   @Column('tinyint', { default: () => 0, nullable: true })
   print_receipt: boolean;
+
+  @Column({ type: 'json', nullable: true })
+  numeric_format: string;
 }
