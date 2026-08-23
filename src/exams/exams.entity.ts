@@ -1,6 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Patient } from 'src/patients/patients.entity';
 import { Examgroup } from 'src/exam_group/examgroup.entity';
+import { Examlists } from 'src/exam_lists/examlists.entity';
 
 @Entity({ name: 'exams' })
 export class Exam {
@@ -37,8 +44,11 @@ export class Exam {
   @Column('int', { default: () => 0 })
   status: boolean;
 
-  @Column({ type: 'text', nullable: true })
-  result: string;
+  @Column({
+    type: 'mediumtext',
+    nullable: true,
+  })
+  result: string | null;
 
   @Column('int', { default: () => 0 })
   size: number;
@@ -74,6 +84,10 @@ export class Exam {
   patients: Patient;
 
   @ManyToOne(() => Examgroup, (examGroup) => examGroup.exam)
-  @JoinColumn({ name: 'group_id' }) 
+  @JoinColumn({ name: 'group_id' })
   examGroup: Examgroup;
+
+  @ManyToOne(() => Examlists, (examList) => examList.exams)
+  @JoinColumn({ name: 'examlistsId', referencedColumnName: 'id' })
+  examList: Examlists;
 }

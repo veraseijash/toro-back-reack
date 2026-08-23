@@ -1,9 +1,11 @@
 import { Examgroup } from 'src/exam_group/examgroup.entity';
+import { Exam } from 'src/exams/exams.entity';
 import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 
@@ -72,4 +74,7 @@ export class Examlists {
   @ManyToOne(() => Examgroup, (examgroup) => examgroup.examlists)
   @JoinColumn({ name: 'group_id' })
   examgroup: Examgroup;
+
+  @OneToMany(() => Exam, (exam) => exam.examList)
+  exams: Exam[];
 }
