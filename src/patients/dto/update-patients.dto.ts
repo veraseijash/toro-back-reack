@@ -48,4 +48,5 @@ export class UpdatePatientsDto {
   email_status?: boolean;
   user_id?: number;
   result_html?: string;
+  permissions?: string[];
 }

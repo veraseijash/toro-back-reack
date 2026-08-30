@@ -14,9 +14,9 @@ export class ExamGroupService {
 
   async createExamgroup(examsgroup: CreateExamgroupDto) {
     const maxPosition = await this.examgroupRepository
-    .createQueryBuilder('exam_group')
-    .select('MAX(position)', 'max')
-    .getRawOne();
+      .createQueryBuilder('exam_group')
+      .select('MAX(position)', 'max')
+      .getRawOne();
 
     const nextPosition = (maxPosition.max || 0) + 1;
     const newExamgroup = this.examgroupRepository.create({
@@ -53,13 +53,21 @@ export class ExamGroupService {
     });
   }
 
+  async getExamgroupsAll() {
+    return this.examgroupRepository.find({
+      order: {
+        position: 'ASC',
+      },
+    });
+  }
+
   async getMaxPosition(): Promise<number> {
     const result = await this.examgroupRepository
       .createQueryBuilder('exam_group')
       .select('MAX(exam_group.position)', 'max')
       .getRawOne();
 
-    return result.max || 0; 
+    return result.max || 0;
   }
 
   async getExamgroupsList() {

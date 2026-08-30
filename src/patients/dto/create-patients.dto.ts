@@ -47,4 +47,5 @@ export class CreatePatientsDto {
   email_sent: boolean;
   email_status: boolean;
   user_id: number;
+  permissions: string[];
 }

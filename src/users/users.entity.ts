@@ -66,6 +66,12 @@ export class User {
   @Column('tinyint', { default: () => 0, nullable: false })
   hide_user: boolean;
 
+  @Column({
+    type: 'json',
+    nullable: false,
+  })
+  permissions: string[] = [];
+
   @OneToOne(() => Groupht, (groupht) => groupht.user)
   groupht: Groupht;
 
