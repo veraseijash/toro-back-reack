@@ -12,6 +12,7 @@ import { ExamListsService } from './examlists.service';
 import { CreateExam_listDto } from './dto/create-exam_lists.dto';
 import { UpdateExam_listDto } from './dto/update-exam_lists.dto';
 import { JwtUserGuard } from '../users/jwt-user.guard';
+import { GetExamsByGroupPaginatedDto } from './dto/get-exams-by-group-paginated.dto';
 
 @Controller('examlists')
 export class ExamListsController {
@@ -33,6 +34,16 @@ export class ExamListsController {
   @Get('/group/:id')
   getExamByGroup(@Param('id', ParseIntPipe) id: number) {
     return this.examListsService.getExamByGroup(id);
+  }
+
+  @UseGuards(JwtUserGuard)
+  @Post('/group/paginated')
+  getExamByGroupPaginated(@Body() request: GetExamsByGroupPaginatedDto) {
+    return this.examListsService.getExamByGroupPaginated(
+      request.groupId,
+      request.itemsPerPage,
+      request.page,
+    );
   }
 
   @UseGuards(JwtUserGuard)

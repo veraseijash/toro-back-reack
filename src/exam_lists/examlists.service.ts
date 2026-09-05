@@ -26,7 +26,7 @@ export class ExamListsService {
     });
     return this.examListRepository.save(newExam);
   }
-  
+
   async getMaxPosition(groupId: number): Promise<number> {
     const result = await this.examListRepository
       .createQueryBuilder('exam_lists')
@@ -34,7 +34,7 @@ export class ExamListsService {
       .where('exam_lists.group_id = :groupId', { groupId })
       .getRawOne();
 
-    return result.max || 0; 
+    return result.max || 0;
   }
 
   async getExamList(id: number) {
@@ -50,7 +50,7 @@ export class ExamListsService {
   }
 
   async getExamByGroup(id: number) {
-    const examListFound = this.examListRepository.find({
+    const examListFound = await this.examListRepository.find({
       where: {
         group_id: id,
       },
@@ -62,6 +62,49 @@ export class ExamListsService {
       return new HttpException('examen no encontrado', HttpStatus.NOT_FOUND);
     }
     return examListFound;
+  }
+
+  async getExamByGroupPaginated(
+    groupId: number,
+    itemsPerPage: number,
+    page: number,
+  ) {
+    const normalizedGroupId = Number(groupId);
+    const normalizedItemsPerPage = Number(itemsPerPage);
+    const normalizedPage = Number(page);
+
+    if (
+      !Number.isInteger(normalizedGroupId) ||
+      normalizedGroupId <= 0 ||
+      !Number.isInteger(normalizedItemsPerPage) ||
+      normalizedItemsPerPage <= 0 ||
+      !Number.isInteger(normalizedPage) ||
+      normalizedPage <= 0
+    ) {
+      throw new HttpException(
+        'groupId, itemsPerPage y page deben ser enteros mayores que cero',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const [items, total] = await this.examListRepository.findAndCount({
+      where: {
+        group_id: normalizedGroupId,
+      },
+      order: {
+        description: 'ASC',
+      },
+      skip: (normalizedPage - 1) * normalizedItemsPerPage,
+      take: normalizedItemsPerPage,
+    });
+
+    return {
+      items,
+      total,
+      page: normalizedPage,
+      itemsPerPage: normalizedItemsPerPage,
+      totalPages: Math.ceil(total / normalizedItemsPerPage),
+    };
   }
 
   async getExamByGroupAnulled(id: number) {
