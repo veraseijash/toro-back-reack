@@ -4,6 +4,7 @@ import { Examlists } from './examlists.entity';
 import { Like, Repository } from 'typeorm';
 import { CreateExam_listDto } from './dto/create-exam_lists.dto';
 import { UpdateExam_listDto } from './dto/update-exam_lists.dto';
+import { COST_FIELDS, UpdateGroupCostsDto } from './dto/update-group-costs.dto';
 
 @Injectable()
 export class ExamListsService {
@@ -128,6 +129,70 @@ export class ExamListsService {
       where: {
         description: Like(`%${description}%`),
       },
+    });
+  }
+
+  async updateGroupCosts(request: UpdateGroupCostsDto) {
+    if (
+      !request ||
+      !Number.isInteger(request.group_id) ||
+      request.group_id < 0
+    ) {
+      throw new HttpException(
+        'group_id debe ser un entero mayor o igual a cero',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const { group_id, cambios } = request;
+    if (!Array.isArray(cambios) || cambios.length === 0) {
+      throw new HttpException(
+        'cambios debe ser un arreglo no vacío',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const targets = new Set<string>();
+    for (const cambio of cambios) {
+      if (
+        !cambio ||
+        !COST_FIELDS.includes(cambio.aplicar) ||
+        !COST_FIELDS.includes(cambio.sobre) ||
+        !Number.isFinite(cambio.incremento) ||
+        cambio.incremento < 0 ||
+        targets.has(cambio.aplicar)
+      ) {
+        throw new HttpException(
+          'Cada cambio debe indicar aplicar y sobre entre cost1 y cost6, un incremento numérico no negativo y un campo aplicar sin repetir',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      targets.add(cambio.aplicar);
+    }
+
+    return this.examListRepository.manager.transaction(async (manager) => {
+      const repository = manager.getRepository(Examlists);
+      const exams = await repository.find({
+        ...(group_id === 0 ? {} : { where: { group_id } }),
+        lock: { mode: 'pessimistic_write' },
+      });
+      for (const exam of exams) {
+        const costs: Partial<Examlists> = {};
+        for (const cambio of cambios) {
+          // MySQL devuelve DECIMAL como string; todos los cálculos usan la fila original.
+          const value = Math.round(
+            Number(exam[cambio.aplicar]) +
+              (Number(exam[cambio.sobre]) * cambio.incremento) / 100,
+          );
+          if (!Number.isSafeInteger(value)) {
+            throw new HttpException(
+              'El costo calculado excede el rango de enteros seguros',
+              HttpStatus.BAD_REQUEST,
+            );
+          }
+          costs[cambio.aplicar] = value;
+        }
+        await repository.update(exam.id, costs);
+      }
+      return { group_id, updated: exams.length };
     });
   }
 

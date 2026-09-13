@@ -13,6 +13,7 @@ import { CreateExam_listDto } from './dto/create-exam_lists.dto';
 import { UpdateExam_listDto } from './dto/update-exam_lists.dto';
 import { JwtUserGuard } from '../users/jwt-user.guard';
 import { GetExamsByGroupPaginatedDto } from './dto/get-exams-by-group-paginated.dto';
+import { UpdateGroupCostsDto } from './dto/update-group-costs.dto';
 
 @Controller('examlists')
 export class ExamListsController {
@@ -61,6 +62,12 @@ export class ExamListsController {
   @Post()
   createExamList(@Body() newExam: CreateExam_listDto) {
     return this.examListsService.createExamList(newExam);
+  }
+
+  @UseGuards(JwtUserGuard)
+  @Patch('group/costs')
+  updateGroupCosts(@Body() request: UpdateGroupCostsDto) {
+    return this.examListsService.updateGroupCosts(request);
   }
 
   @UseGuards(JwtUserGuard)
