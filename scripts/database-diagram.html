@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TORO · Relaciones de la base de datos</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0d1424;color:#e2e8f0;font:14px system-ui}header{padding:16px 24px;background:#172237;display:flex;align-items:center;gap:16px;flex-wrap:wrap}h1{font-size:19px;margin:0}p{margin:0;color:#a8b7ce;font-size:12px}input,button{background:#24334b;border:1px solid #41536e;border-radius:6px;color:#fff;padding:8px 12px}button{cursor:pointer}input{width:220px}#viewport{height:calc(100vh - 125px);overflow:auto;background-image:radial-gradient(#29344a 1px,transparent 1px);background-size:20px 20px;position:relative}#space{position:relative}#canvas{position:absolute;transform-origin:0 0}svg{position:absolute;inset:0;overflow:visible;pointer-events:none}.card{position:absolute;width:270px;background:#172237;border:1px solid #41536e;border-radius:10px;box-shadow:0 8px 24px #0004;overflow:hidden}.title{padding:12px;background:#24334b;color:#93c5fd;font-weight:700;cursor:grab;touch-action:none}.row{height:28px;display:flex;align-items:center;padding:0 12px;gap:7px;border-top:1px solid #263349;font-size:12px}.field{flex:1}.type{color:#94a3b8;font-size:11px}.badge{font-size:10px;color:#fbbf24;width:18px}.foreign .badge{color:#5eead4}.selected{border-color:#5eead4}.dim{opacity:.2}path{stroke:#617fa9;stroke-width:1.5;fill:none}path.active{stroke:#5eead4;stroke-width:3}footer{padding:10px 24px;color:#a8b7ce;font-size:12px;line-height:1.6}
+</style>
+<header><div><h1>TORO · Diagrama de tablas</h1><p id="summary"></p></div><input id="search" placeholder="Buscar tabla o campo…" aria-label="Buscar tabla o campo"><button id="less" aria-label="Alejar">−</button><span id="zoom"></span><button id="more" aria-label="Acercar">+</button><button id="reset">Restablecer</button></header>
+<div id="viewport"><div id="space"><div id="canvas"><svg id="links"></svg></div></div></div>
+<footer>PK: clave primaria · FK: campo de relación · ?: admite NULL. Arrastra el título para mover una tarjeta; haz clic para destacar sus relaciones.<br>Esquema de las entidades TypeORM, sin consultar la base de datos. Línea continua: clave foránea; punteada: relación sin restricción en MySQL.</footer>
+<script>
+const data = /*DATABASE_DATA*/;
+const canvas=document.getElementById('canvas'),space=document.getElementById('space'),svg=document.getElementById('links');
+const cards=new Map(),rows=new Map();let scale=.8,selected=null;
+document.getElementById('summary').textContent=`${data.tables.length} tablas · ${data.relations.length} relaciones entre campos`;
+data.tables.forEach((table,index)=>{
+ const card=document.createElement('div');card.className='card';
+ const title=document.createElement('div');title.className='title';title.textContent=table.name;card.append(title);
+ const fields=new Map();table.columns.forEach(column=>{
+  const row=document.createElement('div');row.className='row'+(column.foreign?' foreign':'');
+  const badge=document.createElement('span');badge.className='badge';badge.textContent=column.primary?'PK':column.foreign?'FK':'';
+  const field=document.createElement('span');field.className='field';field.textContent=column.name;
+  const type=document.createElement('span');type.className='type';type.textContent=column.type+(column.nullable?' ?':'');
+  row.append(badge,field,type);card.append(row);fields.set(column.name,row);
+ });
+ canvas.append(card);cards.set(table.name,card);rows.set(table.name,fields);
+ title.addEventListener('pointerdown',event=>{
+  const startX=event.clientX,startY=event.clientY,x=parseFloat(card.style.left),y=parseFloat(card.style.top);let moved=false;
+  title.setPointerCapture(event.pointerId);
+  const move=e=>{moved=moved||Math.abs(e.clientX-startX)+Math.abs(e.clientY-startY)>4;card.style.left=Math.max(10,x+(e.clientX-startX)/scale)+'px';card.style.top=Math.max(10,y+(e.clientY-startY)/scale)+'px';draw();};
+  const up=()=>{title.removeEventListener('pointermove',move);title.removeEventListener('pointerup',up);title.removeEventListener('pointercancel',up);if(!moved){selected=selected===table.name?null:table.name;highlight();}draw();};
+  title.addEventListener('pointermove',move);title.addEventListener('pointerup',up);title.addEventListener('pointercancel',up);
+ });
+});
+function layout(){const heights=Array(4).fill(30);data.tables.forEach(table=>{const column=heights.indexOf(Math.min(...heights)),card=cards.get(table.name);card.style.left=(30+column*390)+'px';card.style.top=heights[column]+'px';heights[column]+=card.offsetHeight+65;});selected=null;highlight();draw();}
+function resize(){let width=0,height=0;cards.forEach(card=>{width=Math.max(width,card.offsetLeft+card.offsetWidth+100);height=Math.max(height,card.offsetTop+card.offsetHeight+100);});canvas.style.width=width+'px';canvas.style.height=height+'px';svg.setAttribute('width',width);svg.setAttribute('height',height);canvas.style.transform=`scale(${scale})`;space.style.width=width*scale+'px';space.style.height=height*scale+'px';document.getElementById('zoom').textContent=Math.round(scale*100)+'%';}
+function draw(){resize();svg.replaceChildren();data.relations.forEach(relation=>{
+ const a=cards.get(relation.from),b=cards.get(relation.to),ar=rows.get(relation.from).get(relation.field),br=rows.get(relation.to).get(relation.target);
+ const right=a.offsetLeft<=b.offsetLeft;const x1=a.offsetLeft+(right?a.offsetWidth:0),x2=b.offsetLeft+(right?0:b.offsetWidth),y1=a.offsetTop+ar.offsetTop+ar.offsetHeight/2,y2=b.offsetTop+br.offsetTop+br.offsetHeight/2;
+ const bend=Math.max(55,Math.abs(x2-x1)*.45),direction=right?1:-1;
+ const path=document.createElementNS('http://www.w3.org/2000/svg','path');path.setAttribute('d',`M ${x1} ${y1} C ${x1+direction*bend} ${y1}, ${x2-direction*bend} ${y2}, ${x2} ${y2}`);
+ if(!relation.constrained)path.setAttribute('stroke-dasharray','6 4');
+ if(selected===relation.from||selected===relation.to)path.classList.add('active');
+ const title=document.createElementNS('http://www.w3.org/2000/svg','title');title.textContent=`${relation.from}.${relation.field} → ${relation.to}.${relation.target}`;path.append(title);svg.append(path);
+ for(const [x,y] of [[x1,y1],[x2,y2]]){const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');dot.setAttribute('cx',x);dot.setAttribute('cy',y);dot.setAttribute('r',3);dot.setAttribute('fill',selected===relation.from||selected===relation.to?'#5eead4':'#93c5fd');svg.append(dot);}
+ });}
+function highlight(){const query=document.getElementById('search').value.toLowerCase();const neighbors=new Set([selected]);data.relations.forEach(r=>{if(r.from===selected)neighbors.add(r.to);if(r.to===selected)neighbors.add(r.from);});data.tables.forEach(t=>{const card=cards.get(t.name);card.classList.toggle('selected',t.name===selected);card.classList.toggle('dim',Boolean((selected&&!neighbors.has(t.name))||(query&&!t.name.toLowerCase().includes(query)&&!t.columns.some(c=>c.name.toLowerCase().includes(query)))));});}
+document.getElementById('search').addEventListener('input',highlight);
+document.getElementById('more').onclick=()=>{scale=Math.min(1.6,scale+.1);resize();};document.getElementById('less').onclick=()=>{scale=Math.max(.3,scale-.1);resize();};document.getElementById('reset').onclick=()=>{document.getElementById('search').value='';scale=.8;layout();};layout();
+</script>
+</html>

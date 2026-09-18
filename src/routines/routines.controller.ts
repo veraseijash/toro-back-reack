@@ -30,6 +30,7 @@ export class RoutinesController {
     return this.routineService.getRoutines(id);
   }
 
+  @UseGuards(JwtUserGuard)
   @Post()
   createRoutines(@Body() newGroupHt: CreateRoutinesDto) {
     return this.routineService.createRoutines(newGroupHt);
@@ -46,7 +47,7 @@ export class RoutinesController {
 
   @UseGuards(JwtUserGuard)
   @Delete(':id')
-  deleteGroupHt(@Param('id', ParseIntPipe) id: number) {
+  deleteRoutines(@Param('id', ParseIntPipe) id: number) {
     return this.routineService.deleteRoutines(id);
   }
 
