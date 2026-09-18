@@ -55,6 +55,9 @@ export class ExamGroupService {
 
   async getExamgroupsAll() {
     return this.examgroupRepository.find({
+      relations: {
+        examlists: true,
+      },
       order: {
         position: 'ASC',
       },
