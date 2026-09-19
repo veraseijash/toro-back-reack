@@ -13,7 +13,11 @@ export class AntibioticService {
   ) {}
 
   async getAntibioticLists() {
-    return this.antibioticRepository.find();
+    return this.antibioticRepository.find({
+      order: {
+        description: 'ASC',
+      },
+    });
   }
 
   async getAntibioticListsOrder() {
@@ -44,6 +48,17 @@ export class AntibioticService {
       );
     }
     return antibioticFound;
+  }
+
+  async deleteAntibiotic(id: number) {
+    const result = await this.antibioticRepository.delete({ id });
+    if (result.affected === 0) {
+      throw new HttpException(
+        'antibiotico no encontrado',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return true;
   }
 
   async createAntibiotic(antibiotic: CreateAntibioticDto) {

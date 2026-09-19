@@ -2,5 +2,5 @@ export class UpdateGroup_htDto {
   description?: string;
   details?: string;
   annulled?: boolean;
-  userId?: number;
+  userId?: number | null;
 }

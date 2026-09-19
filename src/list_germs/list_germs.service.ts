@@ -37,11 +37,18 @@ export class ListGermsService {
     return germFound;
   }
 
+  async deleteGerm(id: number) {
+    const result = await this.listGermsRepository.delete({ id });
+    if (result.affected === 0) {
+      throw new HttpException('Germen no encontrado', HttpStatus.NOT_FOUND);
+    }
+    return true;
+  }
+
   async createGerm(listGerm: CreateList_germsDto) {
     const newExam = this.listGermsRepository.create(listGerm);
     return this.listGermsRepository.save(newExam);
   }
-  
 
   async updateGerm(id: number, germ: UpdateList_germsDto) {
     const germFound = await this.listGermsRepository.findOne({

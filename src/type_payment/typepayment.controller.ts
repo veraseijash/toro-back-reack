@@ -30,6 +30,7 @@ export class typepaymentController {
     return this.typepaymentService.getTypepayments();
   }
 
+  @UseGuards(JwtUserGuard)
   @Post()
   createTypepayment(@Body() newTypepayment: CreateTypepaymantDto) {
     return this.typepaymentService.createTypepayment(newTypepayment);

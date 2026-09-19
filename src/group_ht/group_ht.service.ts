@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Groupht } from './group_ht.entity';
+import { Grouphtitems } from '../group_ht_items/group_ht_items.entity';
 import { Repository, Like } from 'typeorm';
 import { CreateGroup_htDto } from './dto/create-group_ht.dto';
 import { UpdateGroup_htDto } from './dto/update-group_ht.dto';
@@ -12,7 +13,9 @@ export class GroupHtService {
   ) {}
 
   async getGroupHtList() {
-    return this.group_htRepository.find();
+    return this.group_htRepository.find({
+      relations: ['grouphtitems'],
+    });
   }
 
   async getGroupHtListActive() {
@@ -101,7 +104,10 @@ export class GroupHtService {
   }
 
   async createGroupHt(groupHt: CreateGroup_htDto) {
-    const newGroupHt = this.group_htRepository.create(groupHt);
+    const newGroupHt = this.group_htRepository.create({
+      ...groupHt,
+      userId: groupHt.userId === 0 ? null : groupHt.userId,
+    });
     return this.group_htRepository.save(newGroupHt);
   }
 
@@ -114,22 +120,25 @@ export class GroupHtService {
     if (!groupHtFound) {
       return new HttpException('grupo ht no encontrado', HttpStatus.NOT_FOUND);
     }
-    const updateGroupHt = Object.assign(groupHtFound, groupHt);
+    const changes = { ...groupHt };
+    if (changes.userId === 0) changes.userId = null;
+    const updateGroupHt = Object.assign(groupHtFound, changes);
     return this.group_htRepository.save(updateGroupHt);
   }
 
   async deleteGroupHt(id: number) {
-    const groupHtFound = await this.group_htRepository.findOne({
-      where: {
-        id,
-      },
-      relations: ['grouphtitems'],
+    return this.group_htRepository.manager.transaction(async (manager) => {
+      const groupHtFound = await manager.findOne(Groupht, {
+        where: { id },
+      });
+      if (!groupHtFound) {
+        throw new HttpException('grupo ht no encontrado', HttpStatus.NOT_FOUND);
+      }
+
+      await manager.delete(Grouphtitems, { groupHtId: id });
+      await manager.remove(Groupht, groupHtFound);
+      return true;
     });
-    if (!groupHtFound) {
-      return new HttpException('grupo ht no encontrado', HttpStatus.NOT_FOUND);
-    }
-    await this.group_htRepository.remove(groupHtFound);
-    return true;
   }
 
   async getGroupList() {

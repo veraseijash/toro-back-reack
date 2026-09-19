@@ -6,7 +6,6 @@ import {
   Column,
   PrimaryGeneratedColumn,
   OneToMany,
-  OneToOne,
 } from 'typeorm';
 @Entity({ name: 'users' })
 export class User {
@@ -72,8 +71,8 @@ export class User {
   })
   permissions: string[] = [];
 
-  @OneToOne(() => Groupht, (groupht) => groupht.user)
-  groupht: Groupht;
+  @OneToMany(() => Groupht, (groupht) => groupht.user)
+  groupht: Groupht[];
 
   @OneToMany(() => Patient, (patient) => patient.user)
   patients: Patient[];

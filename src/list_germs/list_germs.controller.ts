@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ListGermsService } from './list_germs.service';
 import { JwtUserGuard } from 'src/users/jwt-user.guard';
 import { CreateList_germsDto } from './dto/create-list_germs.dto';
@@ -17,7 +27,7 @@ export class ListGermsController {
   @UseGuards(JwtUserGuard)
   @Get('/list')
   getListGermsOrder() {
-    return this.listGermsService.getListGermsOrder()
+    return this.listGermsService.getListGermsOrder();
   }
 
   @UseGuards(JwtUserGuard)
@@ -30,6 +40,12 @@ export class ListGermsController {
   @Post()
   createGerm(@Body() newGerm: CreateList_germsDto) {
     return this.listGermsService.createGerm(newGerm);
+  }
+
+  @UseGuards(JwtUserGuard)
+  @Delete(':id')
+  deleteGerm(@Param('id', ParseIntPipe) id: number) {
+    return this.listGermsService.deleteGerm(id);
   }
 
   @UseGuards(JwtUserGuard)

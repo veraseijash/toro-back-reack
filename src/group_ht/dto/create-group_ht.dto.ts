@@ -2,5 +2,5 @@ export class CreateGroup_htDto {
   description: string;
   details: string;
   annulled: boolean;
-  userId: number;
+  userId: number | null;
 }

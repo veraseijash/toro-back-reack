@@ -5,11 +5,13 @@ import {
   Column,
   PrimaryGeneratedColumn,
   OneToMany,
-  OneToOne,
+  ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 
 @Entity({ name: 'group_ht' })
+@Index('IDX_group_ht_userId', ['userId'])
 export class Groupht {
   @PrimaryGeneratedColumn()
   id: number;
@@ -23,10 +25,10 @@ export class Groupht {
   @Column('tinyint', { default: () => 0 })
   annulled: boolean;
 
-  @Column('int', { default: () => 0 })
-  userId: number;
+  @Column('int', { nullable: true, default: null })
+  userId: number | null;
 
-  @OneToOne(() => User, (user) => user.groupht)
+  @ManyToOne(() => User, (user) => user.groupht, { nullable: true })
   @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
   user: User;
 

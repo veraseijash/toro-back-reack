@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Post,
   Param,
@@ -33,6 +34,12 @@ export class AntibioticController {
   @Get(':id')
   getAntibiotic(@Param('id', ParseIntPipe) id: number) {
     return this.antibioticService.getAntibiotic(id);
+  }
+
+  @UseGuards(JwtUserGuard)
+  @Delete(':id')
+  deleteAntibiotic(@Param('id', ParseIntPipe) id: number) {
+    return this.antibioticService.deleteAntibiotic(id);
   }
 
   @Post()
