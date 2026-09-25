@@ -50,6 +50,12 @@ export class UsersController {
   }
 
   @UseGuards(JwtUserGuard)
+  @Get('/patients/:admissiondate')
+  getUsersWithPatientsByDate(@Param('admissiondate') admissionDate: string) {
+    return this.usersService.getUsersWithPatientsByDate(admissionDate);
+  }
+
+  @UseGuards(JwtUserGuard)
   @Get(':id')
   getUser(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.getUser(id);

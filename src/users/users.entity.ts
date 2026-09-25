@@ -1,12 +1,7 @@
 import { Groupht } from 'src/group_ht/group_ht.entity';
 import { Patient } from 'src/patients/patients.entity';
 import { Message } from '../websockets/message.entity';
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  OneToMany,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
 @Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn()

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Post,
   Param,
@@ -29,6 +30,7 @@ export class Cash_registerController {
     return this.cash_registerService.getCash_register(id);
   }
 
+  @UseGuards(JwtUserGuard)
   @Post()
   createCash_register(@Body() newCash: CreateCash_registerDto) {
     return this.cash_registerService.createCash_register(newCash);
@@ -50,5 +52,11 @@ export class Cash_registerController {
       body.date,
       body.idUser,
     );
+  }
+
+  @UseGuards(JwtUserGuard)
+  @Delete(':id')
+  deleteCash_register(@Param('id', ParseIntPipe) id: number) {
+    return this.cash_registerService.deleteCash_register(id);
   }
 }

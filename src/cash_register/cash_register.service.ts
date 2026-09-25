@@ -60,4 +60,15 @@ export class Cash_registerService {
       .andWhere('cash_register.user_id = :idUser', { idUser })
       .getMany();
   }
+
+  async deleteCash_register(id: number) {
+    const result = await this.cash_registerRepository.delete({ id });
+    if (result.affected === 0) {
+      throw new HttpException(
+        'movimiento de caja no encontrado',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return result;
+  }
 }

@@ -1,4 +1,9 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './users.entity';
 import { Repository, Not } from 'typeorm';
@@ -9,6 +14,7 @@ import { JwtService } from '@nestjs/jwt';
 import { LaboratoryService } from 'src/laboratory/laboratory.service';
 import { LicenseService } from 'src/license/license.service';
 import { Message } from 'src/websockets/message.entity';
+import { cash_register } from 'src/cash_register/cash_register.entity';
 const bcrypt = require('bcrypt');
 
 @Injectable()
@@ -44,6 +50,47 @@ export class UsersService {
 
   getUsers() {
     return this.usersRepository.find();
+  }
+
+  getUsersWithPatientsByDate(admissionDate: string) {
+    const parsedDate = new Date(`${admissionDate}T00:00:00.000Z`);
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(admissionDate) ||
+      Number.isNaN(parsedDate.getTime()) ||
+      parsedDate.toISOString().slice(0, 10) !== admissionDate
+    ) {
+      throw new BadRequestException(
+        'La fecha debe ser una fecha valida con formato YYYY-MM-DD',
+      );
+    }
+
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .select([
+        'user.id',
+        'user.name',
+        'user.user_name',
+        'user.url_photo',
+        'user.position',
+      ])
+      .innerJoinAndSelect(
+        'user.patients',
+        'patient',
+        'patient.admission_date = :admissionDate',
+        { admissionDate },
+      )
+      .leftJoinAndMapMany(
+        'user.cash_register',
+        cash_register,
+        'cashRegister',
+        'cashRegister.user_id = user.id AND cashRegister.admission_date = :admissionDate',
+        { admissionDate },
+      )
+      .orderBy('user.name', 'ASC')
+      .addOrderBy('user.id', 'ASC')
+      .addOrderBy('patient.id', 'ASC')
+      .addOrderBy('cashRegister.id', 'ASC')
+      .getMany();
   }
 
   getUsersOrder() {
