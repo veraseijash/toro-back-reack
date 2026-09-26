@@ -101,6 +101,17 @@ export class UsersService {
     });
   }
 
+  getVisibleUsers(): Promise<User[]> {
+    return this.usersRepository.find({
+      where: {
+        hide_user: false,
+      },
+      order: {
+        name: 'ASC',
+      },
+    });
+  }
+
   async getVisibleUsersWithUnreadMessageCount(userId: number) {
     const { entities, raw } = await this.usersRepository
       .createQueryBuilder('user')

@@ -42,6 +42,12 @@ export class UsersController {
   }
 
   @UseGuards(JwtUserGuard)
+  @Get('/visible')
+  getVisibleUsers(): Promise<User[]> {
+    return this.usersService.getVisibleUsers();
+  }
+
+  @UseGuards(JwtUserGuard)
   @Get('/visible-with-unread-messages/:userId')
   getVisibleUsersWithUnreadMessageCount(
     @Param('userId', ParseIntPipe) userId: number,

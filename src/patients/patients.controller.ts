@@ -4,6 +4,7 @@ import {
   Get,
   Post,
   Param,
+  Query,
   ParseIntPipe,
   Patch,
   UseGuards,
@@ -42,6 +43,16 @@ export class PatientsController {
   @Get()
   getPatientLists() {
     return this.patienService.getPatientLists();
+  }
+
+  @UseGuards(JwtUserGuard)
+  @Get('/paginated')
+  getPatientsPaginated(
+    @Query('itemsPerPage', ParseIntPipe) itemsPerPage: number,
+    @Query('page', ParseIntPipe) page: number,
+    @Query() filters: Record<string, string>,
+  ) {
+    return this.patienService.getPatientsPaginated(itemsPerPage, page, filters);
   }
 
   @UseGuards(JwtUserGuard)

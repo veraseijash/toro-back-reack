@@ -23,6 +23,90 @@ export class PatientsService {
     return this.patientRepository.find();
   }
 
+  async getPatientsPaginated(itemsPerPage: number, page: number, filters: Record<string, string> = {}) {
+    if (
+      !Number.isSafeInteger(itemsPerPage) ||
+      itemsPerPage <= 0 ||
+      !Number.isSafeInteger(page) ||
+      page <= 0
+    ) {
+      throw new HttpException(
+        'itemsPerPage y page deben ser enteros mayores que cero',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const skip = (page - 1) * itemsPerPage;
+    if (!Number.isSafeInteger(skip)) {
+      throw new HttpException(
+        'La pagina solicitada excede el rango permitido',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const query = this.patientRepository.createQueryBuilder('patient')
+      .leftJoin('patient.client', 'client')
+      .addSelect(['client.id', 'client.credit']);
+    const readFilter = (key: string) => {
+      const value = filters[key];
+      if (value == null || value === '') return undefined;
+      if (typeof value !== 'string') {
+        throw new HttpException('Filtro no valido: ' + key, HttpStatus.BAD_REQUEST);
+      }
+      return value.trim() || undefined;
+    };
+    const readDate = (key: string) => {
+      const value = readFilter(key);
+      if (!value) return undefined;
+      const parsed = new Date(value + 'T00:00:00Z');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || !Number.isFinite(parsed.getTime())
+        || parsed.toISOString().slice(0, 10) !== value) {
+        throw new HttpException('Fecha no valida: ' + key, HttpStatus.BAD_REQUEST);
+      }
+      return value;
+    };
+    const firstDate = readDate('firstDate');
+    const lastDate = readDate('lastDate');
+    if (firstDate && lastDate && firstDate > lastDate) {
+      throw new HttpException('Rango de fechas no valido', HttpStatus.BAD_REQUEST);
+    }
+    if (firstDate) query.andWhere('patient.admission_date >= :firstDate', { firstDate });
+    if (lastDate) query.andWhere('patient.admission_date <= :lastDate', { lastDate });
+    const namePatient = readFilter('namePatient');
+    const ciPatient = readFilter('ciPatient');
+    if (namePatient) query.andWhere('patient.name LIKE :namePatient', { namePatient: '%' + namePatient + '%' });
+    if (ciPatient) query.andWhere('patient.document_number LIKE :ciPatient', { ciPatient: '%' + ciPatient + '%' });
+    for (const [key, column] of [['userSelection', 'user_id'], ['clientSelection', 'client_id']]) {
+      const value = readFilter(key);
+      if (value === undefined || value === '0') continue;
+      const id = Number(value);
+      if (!/^\d+$/.test(value) || !Number.isSafeInteger(id) || id <= 0) {
+        throw new HttpException('Identificador no valido: ' + key, HttpStatus.BAD_REQUEST);
+      }
+      query.andWhere('patient.' + column + ' = :' + key, { [key]: id });
+    }
+    const status = readFilter('clientSelectionStatus');
+    if (status !== undefined && status !== '-1') {
+      if (status !== '0' && status !== '1') {
+        throw new HttpException('Estado de pago no valido', HttpStatus.BAD_REQUEST);
+      }
+      query.andWhere(status === '1' ? 'patient.total_canceled > 0' : 'patient.total_canceled = 0');
+    }
+    const [items, total] = await query
+      .orderBy('patient.id', 'ASC')
+      .skip(skip)
+      .take(itemsPerPage)
+      .getManyAndCount();
+
+    return {
+      items,
+      total,
+      page,
+      itemsPerPage,
+      totalPages: Math.ceil(total / itemsPerPage),
+    };
+  }
+
   async getPatient(id: number) {
     const patientFound = await this.patientRepository.findOne({
       where: {
