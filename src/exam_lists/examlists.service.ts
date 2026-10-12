@@ -54,6 +54,7 @@ export class ExamListsService {
     const examListFound = await this.examListRepository.find({
       where: {
         group_id: id,
+        annulled: false,
       },
       order: {
         description: 'ASC',
@@ -128,6 +129,7 @@ export class ExamListsService {
     return this.examListRepository.find({
       where: {
         description: Like(`%${description}%`),
+        annulled: false,
       },
     });
   }
