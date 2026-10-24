@@ -19,6 +19,12 @@ export class typepaymentController {
   constructor(private typepaymentService: TypePaymentService) {}
 
   @UseGuards(JwtUserGuard)
+  @Get('active')
+  getTypepaymentsActive() {
+    return this.typepaymentService.getTypepaymentsActive();
+  }
+
+  @UseGuards(JwtUserGuard)
   @Get(':id')
   getTypepayment(@Param('id', ParseIntPipe) id: number) {
     return this.typepaymentService.getTypepayment(id);

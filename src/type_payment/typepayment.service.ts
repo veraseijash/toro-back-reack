@@ -20,6 +20,14 @@ export class TypePaymentService {
     return this.typePaymentRepository.find();
   }
 
+  async getTypepaymentsActive() {
+    return this.typePaymentRepository.find({
+      where: {
+        annulled: false,
+      },
+    });
+  }
+
   async getTypepayment(id: number) {
     const typePaymentFound = this.typePaymentRepository.findOne({
       where: {
